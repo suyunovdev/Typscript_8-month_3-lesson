@@ -1,74 +1,66 @@
 {
   "users": [
     {
-      "id": 1,
-      "name": "Abdulla",
-      "lastname": "Tursunov",
-      "group": "A",
-      "level": 3
-    },
-    {
-      "id": 2,
-      "name": "Dilnoza",
-      "lastname": "Ergasheva",
-      "group": "B",
-      "level": 2
-    },
-    {
-      "id": 3,
-      "name": "Kamron",
-      "lastname": "Olimov",
-      "group": "C",
-      "level": 1
-    },
-    {
       "id": 4,
       "name": "Laylo",
       "lastname": "Nazarova",
-      "group": "A",
-      "level": 3
+      "group": "N50",
+      "level": "Middle"
     },
     {
       "id": 5,
       "name": "Jamshid",
       "lastname": "Rahimov",
-      "group": "B",
-      "level": 2
+      "group": "N60",
+      "level": "Senior"
     },
     {
       "id": 6,
       "name": "Madina",
       "lastname": "Rasulova",
-      "group": "C",
-      "level": 1
+      "group": "N25",
+      "level": "Middle"
     },
     {
       "id": 7,
       "name": "Azamat",
       "lastname": "Qodirov",
-      "group": "A",
-      "level": 3
+      "group": "N54",
+      "level": "Senior"
     },
     {
       "id": 8,
       "name": "Zuhra",
       "lastname": "Sobirova",
-      "group": "B",
-      "level": 2
+      "group": "N45",
+      "level": "Middle"
     },
     {
       "id": 9,
       "name": "Murod",
       "lastname": "Yusupov",
-      "group": "C",
-      "level": 1
+      "group": "N45",
+      "level": "Senior"
     },
     {
       "id": 10,
       "name": "Shahzod",
       "lastname": "Karimov",
-      "group": "A",
-      "level": 3
+      "group": "N58",
+      "level": "Junior"
     }
+  ],
+  "groups": [
+    { "id": 1, "name": "N50" },
+    { "id": 2, "name": "N60" },
+    { "id": 3, "name": "N25" },
+    { "id": 4, "name": "N54" },
+    { "id": 5, "name": "N45" },
+    { "id": 6, "name": "N58" }
+  ],
+  "levels": [
+    { "id": 1, "name": "Middle" },
+    { "id": 2, "name": "Senior" },
+    { "id": 3, "name": "Junior" }
   ]
 }

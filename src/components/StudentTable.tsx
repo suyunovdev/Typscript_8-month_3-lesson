@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Table, Button, Form, Modal } from "react-bootstrap";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface User {
-  id: number;
+  id?: number;
   name: string;
   lastname: string;
   group: string;
@@ -12,9 +14,11 @@ interface User {
 
 const StudentTable: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [levels, setLevels] = useState<number[]>([]);
   const [show, setShow] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<User>({
     name: "",
     lastname: "",
     group: "",
@@ -23,6 +27,8 @@ const StudentTable: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchGroups();
+    fetchLevels();
   }, []);
 
   const fetchUsers = async () => {
@@ -31,6 +37,27 @@ const StudentTable: React.FC = () => {
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
+      toast.error("Foydalanuvchilarni olishda xatolik");
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/groups");
+      setGroups(response.data);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      toast.error("Guruhlarni olishda xatolik");
+    }
+  };
+
+  const fetchLevels = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/levels");
+      setLevels(response.data);
+    } catch (error) {
+      console.error("Error fetching levels:", error);
+      toast.error("Darajalarni olishda xatolik");
     }
   };
 
@@ -47,11 +74,16 @@ const StudentTable: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    try {
-      await axios.delete(`http://localhost:3001/users/${id}`);
-      fetchUsers();
-    } catch (error) {
-      console.error("Error deleting user:", error);
+    const isConfirmed = window.confirm("Ma'lumotni o'chirishni xohlaysizmi?");
+    if (isConfirmed) {
+      try {
+        await axios.delete(`http://localhost:3001/users/${id}`);
+        toast.success("Ma’lumot muvaffaqiyatli o‘chirildi");
+        fetchUsers();
+      } catch (error) {
+        console.error("Ma’lumotni o‘chirishda xatolik yuz berdi:", error);
+        toast.error("Ma’lumotni o‘chirishda xatolik");
+      }
     }
   };
 
@@ -63,29 +95,32 @@ const StudentTable: React.FC = () => {
           `http://localhost:3001/users/${selectedUser.id}`,
           formData
         );
+        toast.success("Ma’lumot muvaffaqiyatli yangilandi");
       } else {
         await axios.post("http://localhost:3001/users", formData);
+        toast.success("Ma’lumot muvaffaqiyatli qo‘shildi");
       }
       fetchUsers();
       handleClose();
     } catch (error) {
-      console.error("Error saving user:", error);
+      console.error("Ma’lumotni saqlashda xatolik yuz berdi:", error);
+      toast.error("Ma’lumotni saqlashda xatolik");
     }
   };
 
   return (
     <div>
       <Button variant="primary" onClick={() => handleShow(null)}>
-        Add User
+        Foydalanuvchi qo‘shish
       </Button>
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Lastname</th>
-            <th>Group</th>
-            <th>Level</th>
-            <th>Actions</th>
+            <th>Ismi</th>
+            <th>Familiyasi</th>
+            <th>Guruh</th>
+            <th>Daraja</th>
+            <th>Amallar</th>
           </tr>
         </thead>
         <tbody>
@@ -97,10 +132,10 @@ const StudentTable: React.FC = () => {
               <td>{user.level}</td>
               <td>
                 <Button variant="warning" onClick={() => handleShow(user)}>
-                  Edit
+                  Tahrirlash
                 </Button>{" "}
                 <Button variant="danger" onClick={() => handleDelete(user.id)}>
-                  Delete
+                  O‘chirish
                 </Button>
               </td>
             </tr>
@@ -110,15 +145,19 @@ const StudentTable: React.FC = () => {
 
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>{selectedUser ? "Edit User" : "Add User"}</Modal.Title>
+          <Modal.Title>
+            {selectedUser
+              ? "Foydalanuvchini tahrirlash"
+              : "Foydalanuvchi qo‘shish"}
+          </Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group controlId="formName">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>Ismi</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter name"
+                placeholder="Ism kiriting"
                 value={formData.name}
                 onChange={e =>
                   setFormData({ ...formData, name: e.target.value })
@@ -126,10 +165,10 @@ const StudentTable: React.FC = () => {
               />
             </Form.Group>
             <Form.Group controlId="formLastname">
-              <Form.Label>Lastname</Form.Label>
+              <Form.Label>Familiyasi</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter lastname"
+                placeholder="Familiya kiriting"
                 value={formData.lastname}
                 onChange={e =>
                   setFormData({ ...formData, lastname: e.target.value })
@@ -137,38 +176,50 @@ const StudentTable: React.FC = () => {
               />
             </Form.Group>
             <Form.Group controlId="formGroup">
-              <Form.Label>Group</Form.Label>
+              <Form.Label>Guruh</Form.Label>
               <Form.Control
-                type="text"
-                placeholder="Enter group"
+                as="select"
                 value={formData.group}
                 onChange={e =>
                   setFormData({ ...formData, group: e.target.value })
-                }
-              />
+                }>
+                <option value="">Guruhni tanlang</option>
+                {groups.map((group, index) => (
+                  <option key={index} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </Form.Control>
             </Form.Group>
             <Form.Group controlId="formLevel">
-              <Form.Label>Level</Form.Label>
+              <Form.Label>Daraja</Form.Label>
               <Form.Control
-                type="number"
-                placeholder="Enter level"
+                as="select"
                 value={formData.level}
                 onChange={e =>
                   setFormData({ ...formData, level: parseInt(e.target.value) })
-                }
-              />
+                }>
+                <option value="">Darajani tanlang</option>
+                {levels.map((level, index) => (
+                  <option key={index} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </Form.Control>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>
-              Close
+              Bekor qilish
             </Button>
             <Button variant="primary" type="submit">
-              Save Changes
+              Saqlash
             </Button>
           </Modal.Footer>
         </Form>
       </Modal>
+
+      <ToastContainer />
     </div>
   );
 };
