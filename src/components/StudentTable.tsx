@@ -1,39 +1,34 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Table, Button, Form, Modal } from "react-bootstrap";
+import { Table, Button, Form, Modal, Row, Col } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 interface User {
-  id?: number;
+  id: number;
   name: string;
   lastname: string;
   group: string;
-  level: string;
-}
-
-interface Group {
-  id: number;
-  name: string;
-}
-
-interface Level {
-  id: number;
-  name: string;
+  level: number;
 }
 
 const StudentTable: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [levels, setLevels] = useState<Level[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [levels, setLevels] = useState<number[]>([]);
   const [show, setShow] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<User>({
+    id: 0,
     name: "",
     lastname: "",
     group: "",
-    level: "",
+    level: 0,
   });
+  const [searchName, setSearchName] = useState("");
+  const [searchLastname, setSearchLastname] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  //   const [selectedLevel, setSelectedLevel] = useState<number | "">("");
 
   useEffect(() => {
     fetchUsers();
@@ -54,7 +49,7 @@ const StudentTable: React.FC = () => {
   const fetchGroups = async () => {
     try {
       const response = await axios.get("http://localhost:3001/groups");
-      setGroups(response.data);
+      setGroups(response.data.map((group: { name: string }) => group.name));
     } catch (error) {
       console.error("Error fetching groups:", error);
       toast.error("Guruhlarni olishda xatolik");
@@ -64,7 +59,7 @@ const StudentTable: React.FC = () => {
   const fetchLevels = async () => {
     try {
       const response = await axios.get("http://localhost:3001/levels");
-      setLevels(response.data);
+      setLevels(response.data.map((level: { value: number }) => level.value));
     } catch (error) {
       console.error("Error fetching levels:", error);
       toast.error("Darajalarni olishda xatolik");
@@ -73,14 +68,13 @@ const StudentTable: React.FC = () => {
 
   const handleShow = (user: User | null) => {
     setSelectedUser(user);
-    setFormData(
-      user ? { ...user } : { name: "", lastname: "", group: "", level: "" }
-    );
+    setFormData(user ?? { id: 0, name: "", lastname: "", group: "", level: 0 });
     setShow(true);
   };
 
   const handleClose = () => {
     setShow(false);
+    setSelectedUser(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -99,6 +93,16 @@ const StudentTable: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (
+      !formData.name ||
+      !formData.lastname ||
+      !formData.group ||
+      !formData.level
+    ) {
+      toast.error("Barcha maydonlarni to'ldiring!");
+      return;
+    }
+
     try {
       if (selectedUser) {
         await axios.put(
@@ -118,8 +122,93 @@ const StudentTable: React.FC = () => {
     }
   };
 
+  const handleSearchNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchName(e.target.value);
+  };
+
+  const handleSearchLastnameChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchLastname(e.target.value);
+  };
+
+  const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedGroup(e.target.value);
+  };
+
+  //   const handleLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //     setSelectedLevel(e.target.value ? Number(e.target.value) : "");
+  //   };
+
+  const filteredUsers = users.filter(user => {
+    return (
+      (!searchName ||
+        user.name.toLowerCase().includes(searchName.toLowerCase())) &&
+      (!searchLastname ||
+        user.lastname.toLowerCase().includes(searchLastname.toLowerCase())) &&
+      (!selectedGroup || user.group === selectedGroup)
+    );
+  });
+
   return (
     <div>
+      <Row className="mb-3">
+        <Col>
+          <Form.Control
+            type="text"
+            placeholder="Ism bo'yicha qidirish"
+            value={searchName}
+            onChange={handleSearchNameChange}
+          />
+        </Col>
+        <Col>
+          <Form.Control
+            type="text"
+            placeholder="Familiya bo'yicha qidirish"
+            value={searchLastname}
+            onChange={handleSearchLastnameChange}
+          />
+        </Col>
+        <Col>
+          <Form.Control
+            as="select"
+            value={selectedGroup}
+            onChange={handleGroupChange}>
+            <option value="">Guruhni tanlang</option>
+            {groups.length > 0 ? (
+              groups.map((group, index) => (
+                <option key={index} value={group}>
+                  {group}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>
+                Guruhlar mavjud emas
+              </option>
+            )}
+          </Form.Control>
+        </Col>
+        {/* <Col>
+          <Form.Control
+            as="select"
+            value={selectedLevel}
+            onChange={handleLevelChange}>
+            <option value="">Darajani tanlang</option>
+            {levels.length > 0 ? (
+              levels.map((level, index) => (
+                <option key={index} value={level}>
+                  {level}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>
+                Darajalar mavjud emas
+              </option>
+            )}
+          </Form.Control>
+        </Col> */}
+      </Row>
+
       <Button variant="primary" onClick={() => handleShow(null)}>
         Foydalanuvchi qo‘shish
       </Button>
@@ -134,7 +223,7 @@ const StudentTable: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {users.map(user => (
+          {filteredUsers.map(user => (
             <tr key={user.id}>
               <td>{user.name}</td>
               <td>{user.lastname}</td>
@@ -144,7 +233,7 @@ const StudentTable: React.FC = () => {
                 <Button variant="warning" onClick={() => handleShow(user)}>
                   Tahrirlash
                 </Button>{" "}
-                <Button variant="danger" onClick={() => handleDelete(user.id!)}>
+                <Button variant="danger" onClick={() => handleDelete(user.id)}>
                   O‘chirish
                 </Button>
               </td>
@@ -194,9 +283,9 @@ const StudentTable: React.FC = () => {
                   setFormData({ ...formData, group: e.target.value })
                 }>
                 <option value="">Guruhni tanlang</option>
-                {groups.map(group => (
-                  <option key={group.id} value={group.name}>
-                    {group.name}
+                {groups.map((group, index) => (
+                  <option key={index} value={group}>
+                    {group}
                   </option>
                 ))}
               </Form.Control>
@@ -207,12 +296,12 @@ const StudentTable: React.FC = () => {
                 as="select"
                 value={formData.level}
                 onChange={e =>
-                  setFormData({ ...formData, level: e.target.value })
+                  setFormData({ ...formData, level: Number(e.target.value) })
                 }>
                 <option value="">Darajani tanlang</option>
-                {levels.map(level => (
-                  <option key={level.id} value={level.name}>
-                    {level.name}
+                {levels.map((level, index) => (
+                  <option key={index} value={level}>
+                    {level}
                   </option>
                 ))}
               </Form.Control>
@@ -220,10 +309,10 @@ const StudentTable: React.FC = () => {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>
-              Bekor qilish
+              Yopish
             </Button>
             <Button variant="primary" type="submit">
-              Saqlash
+              {selectedUser ? "Yangilash" : "Qo‘shish"}
             </Button>
           </Modal.Footer>
         </Form>
