@@ -9,20 +9,30 @@ interface User {
   name: string;
   lastname: string;
   group: string;
-  level: number;
+  level: string;
+}
+
+interface Group {
+  id: number;
+  name: string;
+}
+
+interface Level {
+  id: number;
+  name: string;
 }
 
 const StudentTable: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [groups, setGroups] = useState<string[]>([]);
-  const [levels, setLevels] = useState<number[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
   const [show, setShow] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<User>({
     name: "",
     lastname: "",
     group: "",
-    level: 0,
+    level: "",
   });
 
   useEffect(() => {
@@ -64,7 +74,7 @@ const StudentTable: React.FC = () => {
   const handleShow = (user: User | null) => {
     setSelectedUser(user);
     setFormData(
-      user ? { ...user } : { name: "", lastname: "", group: "", level: 0 }
+      user ? { ...user } : { name: "", lastname: "", group: "", level: "" }
     );
     setShow(true);
   };
@@ -134,7 +144,7 @@ const StudentTable: React.FC = () => {
                 <Button variant="warning" onClick={() => handleShow(user)}>
                   Tahrirlash
                 </Button>{" "}
-                <Button variant="danger" onClick={() => handleDelete(user.id)}>
+                <Button variant="danger" onClick={() => handleDelete(user.id!)}>
                   O‘chirish
                 </Button>
               </td>
@@ -184,9 +194,9 @@ const StudentTable: React.FC = () => {
                   setFormData({ ...formData, group: e.target.value })
                 }>
                 <option value="">Guruhni tanlang</option>
-                {groups.map((group, index) => (
-                  <option key={index} value={group}>
-                    {group}
+                {groups.map(group => (
+                  <option key={group.id} value={group.name}>
+                    {group.name}
                   </option>
                 ))}
               </Form.Control>
@@ -197,12 +207,12 @@ const StudentTable: React.FC = () => {
                 as="select"
                 value={formData.level}
                 onChange={e =>
-                  setFormData({ ...formData, level: parseInt(e.target.value) })
+                  setFormData({ ...formData, level: e.target.value })
                 }>
                 <option value="">Darajani tanlang</option>
-                {levels.map((level, index) => (
-                  <option key={index} value={level}>
-                    {level}
+                {levels.map(level => (
+                  <option key={level.id} value={level.name}>
+                    {level.name}
                   </option>
                 ))}
               </Form.Control>
