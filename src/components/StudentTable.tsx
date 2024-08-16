@@ -9,13 +9,23 @@ interface User {
   name: string;
   lastname: string;
   group: string;
-  level: number;
+  level: string; // Darajalar string formatda bo'lishi mumkin
+}
+
+interface Group {
+  id: number;
+  name: string;
+}
+
+interface Level {
+  id: number;
+  name: string;
 }
 
 const StudentTable: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [groups, setGroups] = useState<string[]>([]);
-  const [levels, setLevels] = useState<number[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
   const [show, setShow] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<User>({
@@ -23,12 +33,12 @@ const StudentTable: React.FC = () => {
     name: "",
     lastname: "",
     group: "",
-    level: 0,
+    level: "",
   });
   const [searchName, setSearchName] = useState("");
   const [searchLastname, setSearchLastname] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
-  //   const [selectedLevel, setSelectedLevel] = useState<number | "">("");
+  const [selectedLevel, setSelectedLevel] = useState<string>("");
 
   useEffect(() => {
     fetchUsers();
@@ -49,7 +59,7 @@ const StudentTable: React.FC = () => {
   const fetchGroups = async () => {
     try {
       const response = await axios.get("http://localhost:3001/groups");
-      setGroups(response.data.map((group: { name: string }) => group.name));
+      setGroups(response.data);
     } catch (error) {
       console.error("Error fetching groups:", error);
       toast.error("Guruhlarni olishda xatolik");
@@ -59,7 +69,7 @@ const StudentTable: React.FC = () => {
   const fetchLevels = async () => {
     try {
       const response = await axios.get("http://localhost:3001/levels");
-      setLevels(response.data.map((level: { value: number }) => level.value));
+      setLevels(response.data);
     } catch (error) {
       console.error("Error fetching levels:", error);
       toast.error("Darajalarni olishda xatolik");
@@ -68,7 +78,9 @@ const StudentTable: React.FC = () => {
 
   const handleShow = (user: User | null) => {
     setSelectedUser(user);
-    setFormData(user ?? { id: 0, name: "", lastname: "", group: "", level: 0 });
+    setFormData(
+      user ?? { id: 0, name: "", lastname: "", group: "", level: "" }
+    );
     setShow(true);
   };
 
@@ -136,9 +148,9 @@ const StudentTable: React.FC = () => {
     setSelectedGroup(e.target.value);
   };
 
-  //   const handleLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  //     setSelectedLevel(e.target.value ? Number(e.target.value) : "");
-  //   };
+  const handleLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedLevel(e.target.value);
+  };
 
   const filteredUsers = users.filter(user => {
     return (
@@ -146,7 +158,8 @@ const StudentTable: React.FC = () => {
         user.name.toLowerCase().includes(searchName.toLowerCase())) &&
       (!searchLastname ||
         user.lastname.toLowerCase().includes(searchLastname.toLowerCase())) &&
-      (!selectedGroup || user.group === selectedGroup)
+      (!selectedGroup || user.group === selectedGroup) &&
+      (!selectedLevel || user.level === selectedLevel)
     );
   });
 
@@ -175,10 +188,10 @@ const StudentTable: React.FC = () => {
             value={selectedGroup}
             onChange={handleGroupChange}>
             <option value="">Guruhni tanlang</option>
-            {groups.length > 0 ? (
-              groups.map((group, index) => (
-                <option key={index} value={group}>
-                  {group}
+            {groups && groups.length > 0 ? (
+              groups.map(group => (
+                <option key={group.id} value={group.name}>
+                  {group.name}
                 </option>
               ))
             ) : (
@@ -188,16 +201,16 @@ const StudentTable: React.FC = () => {
             )}
           </Form.Control>
         </Col>
-        {/* <Col>
+        <Col>
           <Form.Control
             as="select"
             value={selectedLevel}
             onChange={handleLevelChange}>
             <option value="">Darajani tanlang</option>
-            {levels.length > 0 ? (
-              levels.map((level, index) => (
-                <option key={index} value={level}>
-                  {level}
+            {levels && levels.length > 0 ? (
+              levels.map(level => (
+                <option key={level.id} value={level.name}>
+                  {level.name}
                 </option>
               ))
             ) : (
@@ -206,7 +219,7 @@ const StudentTable: React.FC = () => {
               </option>
             )}
           </Form.Control>
-        </Col> */}
+        </Col>
       </Row>
 
       <Button variant="primary" onClick={() => handleShow(null)}>
@@ -283,11 +296,17 @@ const StudentTable: React.FC = () => {
                   setFormData({ ...formData, group: e.target.value })
                 }>
                 <option value="">Guruhni tanlang</option>
-                {groups.map((group, index) => (
-                  <option key={index} value={group}>
-                    {group}
+                {groups && groups.length > 0 ? (
+                  groups.map(group => (
+                    <option key={group.id} value={group.name}>
+                      {group.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    Guruhlar mavjud emas
                   </option>
-                ))}
+                )}
               </Form.Control>
             </Form.Group>
             <Form.Group controlId="formLevel">
@@ -296,14 +315,20 @@ const StudentTable: React.FC = () => {
                 as="select"
                 value={formData.level}
                 onChange={e =>
-                  setFormData({ ...formData, level: Number(e.target.value) })
+                  setFormData({ ...formData, level: e.target.value })
                 }>
                 <option value="">Darajani tanlang</option>
-                {levels.map((level, index) => (
-                  <option key={index} value={level}>
-                    {level}
+                {levels && levels.length > 0 ? (
+                  levels.map(level => (
+                    <option key={level.id} value={level.name}>
+                      {level.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    Darajalar mavjud emas
                   </option>
-                ))}
+                )}
               </Form.Control>
             </Form.Group>
           </Modal.Body>
@@ -312,12 +337,11 @@ const StudentTable: React.FC = () => {
               Yopish
             </Button>
             <Button variant="primary" type="submit">
-              {selectedUser ? "Yangilash" : "Qo‘shish"}
+              Saqlash
             </Button>
           </Modal.Footer>
         </Form>
       </Modal>
-
       <ToastContainer />
     </div>
   );
